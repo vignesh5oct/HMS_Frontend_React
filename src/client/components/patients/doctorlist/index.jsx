@@ -176,7 +176,7 @@ const DoctorList = (props) => {
   }, []);
 
 const { isLoaded } = useLoadScript({
-    googleMapsApiKey: "AIzaSyD6adZVdzTvBpE2yBRK8cDfsss8QXChK0I", // Replace with your API key
+    googleMapsApiKey: "", // Replace with your API key
   });
 
 
