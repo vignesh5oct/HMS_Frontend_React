@@ -3,6 +3,7 @@ import { Link } from "react-router";
 import Header from "../header";
 import Footer from "../footer";
 import ImageWithBasePath from "../../../core/img/imagewithbasebath";
+import { useNavigate } from "react-router";
 
 const LoginContainer = (props) => {
 
@@ -16,6 +17,60 @@ const LoginContainer = (props) => {
 
   const togglePasswordVisibility = () => {
     setPasswordVisibility(!isPasswordVisible);
+  };
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [errors, setErrors] = useState({});
+  const [showPassword, setShowPassword] = useState(false);
+
+  const navigate = useNavigate();
+
+  const validate = () => {
+    const newErrors = {};
+    if (!email.trim()) {
+      newErrors.email = "Email is required";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      newErrors.email = "Invalid email format";
+    }
+
+    if (!password.trim()) {
+      newErrors.password = "Password is required";
+    } else if (password.length < 6) {
+      newErrors.password = "Password must be at least 6 characters";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!validate()) return;
+
+    try {
+      const response = await fetch("http://127.0.0.1:8000/api/login/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({ email, password }),
+      });
+
+      const resData = await response.json();
+
+      if (response.ok) {
+        alert(resData.message || "Login successful!");
+        navigate("/dashboard");
+      } else {
+        alert(resData.error || "Login failed. Please try again.");
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      alert("An error occurred while logging in.\n" + error.message);
+    }
   };
 
   return (
@@ -44,10 +99,18 @@ const LoginContainer = (props) => {
                           Login <span>Doccure</span>
                         </h3>
                       </div>
-                      <form action="/home">
+                      <form onSubmit={handleSubmit} action="/home">
                         <div className="mb-3">
                           <label className="form-label">E-mail</label>
-                          <input type="text" className="form-control" />
+                          <input
+                            type="text"
+                            className={`form-control ${errors.email ? "is-invalid" : ""}`}
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                          />
+                          {errors.email && (
+                            <div className="text-danger">{errors.email}</div>
+                          )}
                         </div>
                         <div className="mb-3">
                           <div className="form-group-flex">
@@ -59,13 +122,19 @@ const LoginContainer = (props) => {
                           <div className="pass-group">
                             <input
                               type={isPasswordVisible ? "text" : "password"}
-                              className="form-control pass-input-sub"
+                              // className="form-control pass-input-sub"
+                              className={`form-control pass-input ${errors.password ? "is-invalid" : ""}`}
+                              value={password}
+                              onChange={(e) => setPassword(e.target.value)}
                             />
                             <span
                               className={`feather toggle-password-sub ${isPasswordVisible ? "feather-eye" : "feather-eye-off"
                                 }`}
                               onClick={togglePasswordVisibility}
                             />
+                            {errors.password && (
+                              <div className="text-danger mt-1">{errors.password}</div>
+                            )}
                           </div>
                         </div>
                         <div className="mb-3 form-check-box">
